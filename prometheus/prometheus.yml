@@ -1,0 +1,7 @@
+scrape_configs:
+  - job_name: "hello_gunicorn"
+    static_configs:
+      - targets: ["statsd:9102"]
+  - job_name: "hello2_gunicorn"
+    static_configs:
+      - targets: ["statsd:9102"]

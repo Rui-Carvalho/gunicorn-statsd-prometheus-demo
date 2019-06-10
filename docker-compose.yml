@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  statsd:
+    image: prom/statsd-exporter
+    volumes:
+      - ./statsd-exporter/statsd.conf:/statsd/statsd.conf
+    command:
+      - "--statsd.mapping-config=/statsd/statsd.conf"
+    ports:
+      - 9102:9102
+      - 9125:9125
+      - 9125:9125/udp
+  flask:
+    build: ./flask/
+    command:
+      - bash
+      - -c
+      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=hello
+    depends_on:
+      - statsd
+    ports:
+      - 8016:80
+  flask2:
+    build: ./flask/
+    command:
+      - bash
+      - -c
+      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=hello2
+    ports:
+      - 8015:80
+    depends_on:
+      - statsd
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 8013:9090
+    depends_on:
+      - statsd
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
