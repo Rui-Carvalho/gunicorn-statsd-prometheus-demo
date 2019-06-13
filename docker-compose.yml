@@ -11,26 +11,44 @@ services:
       - 9102:9102
       - 9125:9125
       - 9125:9125/udp
-  flask:
+  flask1:
     build: ./flask/
     command:
       - bash
       - -c
-      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=hello
+      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=flask1
     depends_on:
       - statsd
-    ports:
-      - 8016:80
   flask2:
     build: ./flask/
     command:
       - bash
       - -c
-      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=hello2
-    ports:
-      - 8015:80
+      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=flask2
     depends_on:
       - statsd
+  flask3:
+    build: ./flask/
+    command:
+      - bash
+      - -c
+      - gunicorn -b 0.0.0.0:80 main:app -k gevent --statsd-host=statsd:9125 --statsd-prefix=flask3
+    depends_on:
+      - statsd
+  haproxy:
+    image: haproxy
+    command:
+      - haproxy
+      - -f
+      - /etc/haproxy/haproxy.cfg
+    volumes:
+      - ./haproxy/haproxy.cfg:/etc/haproxy/haproxy.cfg
+    ports:
+      - 8011:80
+    depends_on:
+      - flask1
+      - flask2
+      - flask3
   prometheus:
     image: prom/prometheus
     volumes:
@@ -43,3 +61,5 @@ services:
     image: grafana/grafana
     ports:
       - 3000:3000
+  ab:
+    build: ./ab/
